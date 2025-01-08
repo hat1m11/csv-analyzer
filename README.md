@@ -24,3 +24,18 @@ How It Works
 Example CSV Format 📄:
 Make sure your CSV looks like this (with at least "Year" and "Sales" columns):
 
+Year,Sales 
+2020,1500 
+2021,1800 
+2022,2100...
+
+
+## Limitations (I Will Improve It Later!) 🚧
+Right now, the app only handles simple sales data (Year and Sales columns).
+The charts are basic, but we’ll add more features and fancy charts soon!
+It’s all about keeping it simple and fun, for now! 🎉
+
+(Use the Example-CSV in the files of the repo!)
+
+
+
