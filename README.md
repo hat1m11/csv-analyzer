@@ -35,7 +35,7 @@ Right now, the app only handles simple sales data (Year and Sales columns).
 The charts are basic, but we’ll add more features and fancy charts soon!
 It’s all about keeping it simple and fun, for now! 🎉
 
-(Use the Example-CSV in the files of the repo!)
+(Use the sample_data.csv in the files of the repo!)
 
 
 
