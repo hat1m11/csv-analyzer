@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Upload and Chart Visualization</title>
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<form action="/upload" method="post" enctype="multipart/form-data">
+    <label for="csvFile" class="custom-file-upload">
+        Choose CSV File
+    </label>
+    <input type="file" name="csvFile" accept=".csv" id="csvFile" class="file-input" required />
+    <button type="submit">Upload</button>
+</form>
+
+<div class="file-selected" id="fileInfo">
+    <span id="fileSelectedMessage">No file selected yet.</span>
+</div>
+
+<div class="header-image">
+    <img src="/Preview.png" alt="Preview Image" />
+</div>
+
+<div class="popup-message" th:if="${message}">
+    <p th:text="${message}"></p>
+</div>
+
+<div th:if="${xData != null && yData != null}">
+    <div class="chart-wrapper">
+        <div class="chart-container">
+            <h3>Line Chart (Sales Data over Time)</h3>
+            <canvas id="lineChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3>Bar Chart (Sales Data)</h3>
+            <canvas id="barChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3>Pie Chart (Sales Distribution)</h3>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+
+    <div class="data-summary">
+        <h4>Data Summary</h4>
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h5>Mean:</h5>
+                <p><span id="meanData"></span></p>
+            </div>
+            <div class="summary-card">
+                <h5>Median:</h5>
+                <p><span id="medianData"></span></p>
+            </div>
+            <div class="summary-card">
+                <h5>Standard Deviation:</h5>
+                <p><span id="stdDevData"></span></p>
+            </div>
+            <div class="summary-card">
+                <h5>Min Value:</h5>
+                <p><span id="minData"></span></p>
+            </div>
+            <div class="summary-card">
+                <h5>Max Value:</h5>
+                <p><span id="maxData"></span></p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    var xData = /*[[${xData}]]*/ [];
+    var yData = /*[[${yData}]]*/ [];
+
+    // File selection feedback
+    document.getElementById("csvFile").addEventListener("change", function(event) {
+        var fileInput = event.target;
+        var fileName = fileInput.files[0] ? fileInput.files[0].name : "No file selected";
+        var fileStatus = document.getElementById("fileSelectedMessage");
+
+        // Display the selected file name
+        if (fileInput.files.length > 0) {
+            fileStatus.textContent = "You have selected: " + fileName;
+            fileStatus.style.color = "green"; // Optionally, you can change text color to indicate success
+        } else {
+            fileStatus.textContent = "No file selected.";
+            fileStatus.style.color = "red"; // Indicating no file selected
+        }
+    });
+
+    function calculateMean(data) {
+        return data.reduce((sum, value) => sum + value, 0) / data.length;
+    }
+
+    function calculateMedian(data) {
+        data.sort((a, b) => a - b);
+        const middle = Math.floor(data.length / 2);
+        return data.length % 2 === 0 ? (data[middle - 1] + data[middle]) / 2 : data[middle];
+    }
+
+    function calculateStandardDeviation(data, mean) {
+        const variance = data.reduce((acc, value) => acc + Math.pow(value - mean, 2), 0) / data.length;
+        return Math.sqrt(variance);
+    }
+
+    const mean = calculateMean(yData);
+    const median = calculateMedian([...yData]);
+    const stdDev = calculateStandardDeviation(yData, mean);
+    const min = Math.min(...yData);
+    const max = Math.max(...yData);
+
+    document.getElementById("meanData").textContent = mean.toFixed(2);
+    document.getElementById("medianData").textContent = median;
+    document.getElementById("stdDevData").textContent = stdDev.toFixed(2);
+    document.getElementById("minData").textContent = min;
+    document.getElementById("maxData").textContent = max;
+
+    var lineCtx = document.getElementById('lineChart').getContext('2d');
+    var lineChart = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: xData,
+            datasets: [{
+                label: 'Sales Data',
+                data: yData,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: 1,
+            scales: {
+                x: {beginAtZero: true},
+                y: {beginAtZero: true}
+            }
+        }
+    });
+
+    var barCtx = document.getElementById('barChart').getContext('2d');
+    var barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: xData,
+            datasets: [{
+                label: 'Sales Data',
+                data: yData,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: 1,
+            scales: {
+                x: {beginAtZero: true},
+                y: {beginAtZero: true}
+            }
+        }
+    });
+
+    var pieCtx = document.getElementById('pieChart').getContext('2d');
+    var pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: xData,
+            datasets: [{
+                label: 'Sales Data Distribution',
+                data: yData,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: 1,
+        }
+    });
+
+    window.onload = function() {
+        var message = /*[[${message}]]*/ '';
+        if (message) {
+            var popup = document.querySelector('.popup-message');
+            popup.classList.add('show');
+            setTimeout(function() {
+                popup.classList.remove('show');
+            }, 3000);
+        }
+    };
+</script>
+
+</body>
+</html>
